@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<s:sapphire xmlns:s="urn:ge:sapphire:sapphire_1" 
+    xmlns="urn:ge:sapphire:helloMsg_1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    version="0.0">
+    
+    <hello xmlns="urn:ge:sapphire:helloMsg_1">
+        <header xmlns="urn:ge:sapphire:base_1">
+            <sessionId V="hhda2222hdhd" />
+            <mcgCHN V="0" />
+            <msgSQN V="1" />
+            <requestId V="100" />
+            <creationDateTime V="2016-07-27T08:30:00.0Z" />
+        </header>
+    </hello>
+</s:sapphire>
