@@ -10,7 +10,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import javax.mail.BodyPart;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
 
@@ -73,7 +75,32 @@ public class CarescapeClient implements CommandLineRunner {
 		String helloMessage = loadMessageFromFile("hello.xml");
 		writeMessageToOutStream(helloMessage);
 		MimeMessage message = readMessageFromInStream();
-		logger.info("Hello message response from server message.getContent(): [{}]", message.getContent());
+		String xmlBody = extractXmlBodyFromCotentObject(message.getContent());
+		logger.info("Hello message response from server message.getContent(): [{}]", xmlBody);
+		return null;
+	}
+
+	private String extractXmlBodyFromCotentObject(Object content) throws IOException, MessagingException {
+		System.out.println("content type = " + content);
+		if (content instanceof InputStream) {
+			InputStream inputStream = (InputStream) content;
+			BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+			StringBuilder out = new StringBuilder();
+			String line;
+			while ((line = reader.readLine()) != null) {
+				out.append(line);
+			}
+			String emailContent = out.toString();
+			inputStream.close();
+			reader.close();
+			return emailContent;
+		} else if (content instanceof String) {
+			return (String) content;
+		} else if (content instanceof Multipart) {
+			Multipart multipart = (Multipart) content;
+			BodyPart bodyPart = multipart.getBodyPart(0);
+			return extractXmlBodyFromCotentObject(bodyPart.getContent());
+		}
 		return null;
 	}
 
@@ -140,8 +167,9 @@ public class CarescapeClient implements CommandLineRunner {
 			char[] cbuf = new char[2048];
 			br.read(cbuf);
 			br.close();
-			
-			MimeMessage msg = new MimeMessage((Session)null, new ByteArrayInputStream(cbuf.toString().getBytes()));
+
+			System.out.println("----" + String.valueOf(cbuf));
+			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(String.valueOf(cbuf).getBytes()));
 			return msg;
 		} catch (IOException e) {
 			logger.error("IOException while reading message from in stream ", e);
