@@ -1,6 +1,7 @@
 package com.oxyent.carescape.client;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +9,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.MimeMessage;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -51,10 +56,7 @@ public class CarescapeClient implements CommandLineRunner {
 		try {
 			boolean connectionOpened = initSocketAlongWithStreams(host, port);
 			if (connectionOpened) {
-				String helloMessage = loadMessageFromFile("hello.xml");
-				writeMessageToOutStream(helloMessage);
-				String helloMessageResponse = readMessageFromInStream();
-				logger.info("Hello message response from server [{}]", helloMessageResponse);
+				String helloMessageResponse = sendHelloMessage();
 			} else {
 				closeSocket();
 			}
@@ -65,6 +67,14 @@ public class CarescapeClient implements CommandLineRunner {
 			closeSocket();
 		}
 		logger.info("Shuting down the application...");
+	}
+
+	private String sendHelloMessage() throws IOException, MessagingException {
+		String helloMessage = loadMessageFromFile("hello.xml");
+		writeMessageToOutStream(helloMessage);
+		MimeMessage message = readMessageFromInStream();
+		logger.info("Hello message response from server message.getContent(): [{}]", message.getContent());
+		return null;
 	}
 
 	public void closeStreams() {
@@ -123,19 +133,16 @@ public class CarescapeClient implements CommandLineRunner {
 		}
 	}
 
-	public String readMessageFromInStream() throws IOException {
+	public MimeMessage readMessageFromInStream() throws IOException, MessagingException {
 		try {
 			logger.info("Reading message from in stream...");
-			StringBuilder sb = new StringBuilder();
-			String line;
 			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-			while ((line = br.readLine()) != null) {
-				System.out.println(line);
-				sb.append(line);
-			}
-
+			char[] cbuf = new char[2048];
+			br.read(cbuf);
 			br.close();
-			return sb.toString();
+			
+			MimeMessage msg = new MimeMessage((Session)null, new ByteArrayInputStream(cbuf.toString().getBytes()));
+			return msg;
 		} catch (IOException e) {
 			logger.error("IOException while reading message from in stream ", e);
 			throw e;
