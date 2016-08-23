@@ -1,26 +1,16 @@
 package com.oxyent.carescape.client;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.StringReader;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
-import javax.mail.BodyPart;
 import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -38,14 +28,21 @@ public class CarescapeClient implements CommandLineRunner {
 	private static final Logger logger = LoggerFactory.getLogger(CarescapeClient.class);
 
 	private Socket socket;
-	private InputStream inputStream;
-	private OutputStream outputStream;
 
 	@Autowired
 	private Environment env;
-
-	@Value("${mime.message.header}")
-	private String mimeMessageHeader;
+	
+	@Autowired
+	private MessageHandler messageHandler;
+	
+	@Autowired
+	private SessionUpdateServer sessionUpdateServer;
+	
+	@Autowired
+	private NumericConfigStreamServer numConfigStreamServer;
+	
+	@Autowired
+	private WaveformStreamServer waveformStreamServer;
 
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(CarescapeClient.class, args);
@@ -56,68 +53,61 @@ public class CarescapeClient implements CommandLineRunner {
 		String host = env.getProperty("carescape.host");
 		int port = Integer.parseInt(env.getProperty("carescape.port"));
 		try {
-			boolean connectionOpened = initSocketAlongWithStreams(host, port);
-			if (connectionOpened) {
-				String helloMessageResponse = sendHelloMessage();
-			} else {
-				closeSocket();
-			}
+			socket = new Socket(host, port);
+			sendHelloMessage();
+			sendGetSessionUpdateRequestMessage();
+			sendGetNumConfigStreamRequestMessage();
+			sendGetWaveformStreamRequestMessage();
 		} catch (Exception e) {
 			logger.error("CarescapeClientMain: some exception occured ", e);
 		} finally {
-			closeStreams();
 			closeSocket();
 		}
 		logger.info("Shuting down the application...");
 	}
 
-	private String sendHelloMessage() throws IOException, MessagingException {
-		String helloMessage = loadMessageFromFile("hello.xml");
-		writeMessageToOutStream(helloMessage);
-		MimeMessage message = readMessageFromInStream();
-		String xmlBody = extractXmlBodyFromCotentObject(message.getContent());
+	public String sendGetNumConfigStreamRequestMessage() throws IOException, MessagingException {
+		String helloMessage = messageHandler.loadMessageFromFile("numeric-config-data.xml");
+		String xmlBody = messageHandler.writeAndReadMessage(helloMessage, socket);
+		logger.info("GetNumConfigStreamRequest-> response from server message.getContent(): [{}]", xmlBody);
+		numConfigStreamServer.startServer();
+		return null;
+	}
+	
+	public String sendGetWaveformStreamRequestMessage() throws IOException, MessagingException {
+		String helloMessage = messageHandler.loadMessageFromFile("waveform-data.xml");
+		String xmlBody = messageHandler.writeAndReadMessage(helloMessage, socket);
+		logger.info("GetWaveformStreamRequest-> response from server message.getContent(): [{}]", xmlBody);
+		waveformStreamServer.startServer();
+		return null;
+	}
+
+	public String sendHelloMessage() throws IOException, MessagingException {
+		String helloMessage = messageHandler.loadMessageFromFile("hello.xml");
+		String xmlBody = messageHandler.writeAndReadMessage(helloMessage, socket);
 		logger.info("Hello message response from server message.getContent(): [{}]", xmlBody);
 		return null;
 	}
-
-	private String extractXmlBodyFromCotentObject(Object content) throws IOException, MessagingException {
-		System.out.println("content type = " + content);
-		if (content instanceof InputStream) {
-			InputStream inputStream = (InputStream) content;
-			BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-			StringBuilder out = new StringBuilder();
-			String line;
-			while ((line = reader.readLine()) != null) {
-				out.append(line);
-			}
-			String emailContent = out.toString();
-			inputStream.close();
-			reader.close();
-			return emailContent;
-		} else if (content instanceof String) {
-			return (String) content;
-		} else if (content instanceof Multipart) {
-			Multipart multipart = (Multipart) content;
-			BodyPart bodyPart = multipart.getBodyPart(0);
-			return extractXmlBodyFromCotentObject(bodyPart.getContent());
-		}
+	
+	private String sendGetSessionUpdateRequestMessage() throws IOException, MessagingException {
+		String getSessionUpdateRequestMessage = messageHandler.loadMessageFromFile("get-session-update.xml");
+		String xmlBody = messageHandler.writeAndReadMessage(getSessionUpdateRequestMessage, socket);
+		logger.info("GetSessionUpdateRequest-> response from server message.getContent(): [{}]", xmlBody);
+		sessionUpdateServer.startServer();
 		return null;
 	}
 
-	public void closeStreams() {
-		logger.info("Closing in and our streams...");
+	private Object convertXmlToObject(String xmlBody, Class classType) {
 		try {
-			if (inputStream != null) {
-				inputStream.close();
-				inputStream = null;
-			}
-			if (outputStream != null) {
-				outputStream.close();
-				outputStream = null;
-			}
-		} catch (IOException e) {
-			logger.error("Exception while closing the in and out streams ", e);
+			JAXBContext jaxbContext = JAXBContext.newInstance(classType);  
+			   
+	        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();  
+	        StringReader reader = new StringReader(xmlBody);
+	        return jaxbUnmarshaller.unmarshal(reader);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		return null;
 	}
 
 	private void closeSocket() {
@@ -130,59 +120,6 @@ public class CarescapeClient implements CommandLineRunner {
 		} catch (IOException e) {
 			logger.error("Exception while closing the socket ", e);
 		}
-	}
-
-	public boolean initSocketAlongWithStreams(String host, int port) throws IOException {
-		try {
-			logger.info("Opening socket along with in and out stream to host {} and port {}", host, port);
-			socket = new Socket(host, port);
-			outputStream = socket.getOutputStream();
-			inputStream = socket.getInputStream();
-			if (inputStream != null && outputStream != null) {
-				return true;
-			}
-		} catch (UnknownHostException e) {
-			logger.error("Exception while opening socket/in or out stream ", e);
-			e.printStackTrace();
-			throw e;
-		}
-		return false;
-	}
-
-	public void writeMessageToOutStream(String message) {
-		try {
-			logger.info("Writing message to out stream...");
-			java.io.PrintWriter out = new java.io.PrintWriter(socket.getOutputStream(), true);
-			out.println(message);
-			out.flush();
-		} catch (IOException e) {
-			logger.error("IOException while writing message to out stream ", e);
-		}
-	}
-
-	public MimeMessage readMessageFromInStream() throws IOException, MessagingException {
-		try {
-			logger.info("Reading message from in stream...");
-			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-			char[] cbuf = new char[2048];
-			br.read(cbuf);
-			br.close();
-
-			System.out.println("----" + String.valueOf(cbuf));
-			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(String.valueOf(cbuf).getBytes()));
-			return msg;
-		} catch (IOException e) {
-			logger.error("IOException while reading message from in stream ", e);
-			throw e;
-		}
-	}
-
-	public String loadMessageFromFile(String fileName) throws IOException {
-		File file = new File(fileName);
-		String message = FileUtils.readFileToString(file, "UTF-8");
-		int contentLength = message.getBytes().length;
-		String fullMessage = mimeMessageHeader.replace("$content-length$", String.valueOf(contentLength)) + message;
-		return fullMessage;
 	}
 
 }

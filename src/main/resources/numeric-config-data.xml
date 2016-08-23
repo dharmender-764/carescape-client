@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<s:sapphire xmlns:s="urn:ge:sapphire:sapphire_1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0.1">
+	<getStreamRequest xmlns="urn:ge:sapphire:getStreamMsg_1">
+		<header xmlns="urn:ge:sapphire:base_1">
+			<sessionID V="AC1B9C4C0000978557A78148" />
+			<msgCHN V="0" />
+			<msgSQN V="3" />
+			<requestID V="3" />
+			<creationDateTime V="2016-08-07T15:19:39.216Z" />
+		</header>
+		<output xmlns="urn:ge:sapphire:base_1">
+		    <data>
+		        <destination port="9001" />
+		    </data>
+		</output>
+		<query xmlns="urn:ge:sapphire:base_1">
+		    <endTime V="*" />
+		    <sessionIDList>
+		        <sessionID V="AC1B9C4C0000978557A78148" type="IP-32:PORT-32:NTPS-32" />
+		    </sessionIDList>
+		    <selectNodes select="//params/*/(num|cfg)//*" />
+		</query>
+	</getStreamRequest>
+</s:sapphire>
+
+
