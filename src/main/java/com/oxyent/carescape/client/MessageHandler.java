@@ -77,7 +77,7 @@ public class MessageHandler {
 		try {
 			logger.info("Reading message from in stream...");
 			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			char[] cbuf = new char[2048];
+			char[] cbuf = new char[4096];
 			br.read(cbuf);
 
 			System.out.println("readMessageFromSocket: " + String.valueOf(cbuf));

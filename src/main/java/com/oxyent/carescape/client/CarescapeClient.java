@@ -96,10 +96,17 @@ public class CarescapeClient implements CommandLineRunner {
 		String getSessionUpdateRequestMessage = messageHandler.loadMessageFromFile("get-session-update.xml");
 		String xmlBody = messageHandler.writeAndReadMessage(getSessionUpdateRequestMessage, socket);
 		logger.info("GetSessionUpdateRequest-> response from server message.getContent(): [{}]", xmlBody);
+		checkSessionUpdateMessage();
+		return null;
+	}
+
+	private void checkSessionUpdateMessage() throws IOException, MessagingException {
 		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
 		String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
 		logger.info("SessionUpdate-> response from server message.getContent(): [{}]", sessionUpdateXml);
-		return null;
+		if (sessionUpdateXml.indexOf("<sessionUpdate") == -1) {
+			checkSessionUpdateMessage();
+		}
 	}
 
 	private Object convertXmlToObject(String xmlBody, Class classType) {

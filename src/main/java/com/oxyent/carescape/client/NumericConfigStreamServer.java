@@ -1,9 +1,7 @@
 package com.oxyent.carescape.client;
 
-import java.net.ServerSocket;
-import java.net.Socket;
-
-import javax.mail.internet.MimeMessage;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -18,13 +16,18 @@ public class NumericConfigStreamServer {
 	@Async
 	public void startServer() {
 		try {
-			ServerSocket serverSocket = new ServerSocket(9001);
+			DatagramSocket serverSocket = new DatagramSocket(9001);
+            byte[] receiveData = new byte[2048];
 			System.out.println("NumericConfigStreamServer-> Server started  at: 9001");
 
 			while (true) {
 				System.out.println("NumericConfigStreamServer-> Waiting for a  connection...");
-				final Socket socket = serverSocket.accept();
-				System.out.println("NumericConfigStreamServer-> Received a  connection from  " + socket);
+				final DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(receivePacket);
+                String sentence = new String( receivePacket.getData());
+                System.out.println("NumericConfigStreamServer-> data RECEIVED: " + sentence);
+                
+				/*System.out.println("NumericConfigStreamServer-> Received a  connection from  " + socket);
 				Runnable runnable = new Runnable() {
 
 					@Override
@@ -45,7 +48,7 @@ public class NumericConfigStreamServer {
 						}
 					}
 				};
-				new Thread(runnable).start();
+				new Thread(runnable).start();*/
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
