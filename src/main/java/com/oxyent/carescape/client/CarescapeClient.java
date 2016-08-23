@@ -61,7 +61,7 @@ public class CarescapeClient implements CommandLineRunner {
 			sendHelloMessage();
 			sendGetSessionUpdateRequestMessage();
 			sendGetNumConfigStreamRequestMessage();
-			sendGetWaveformStreamRequestMessage();
+			//sendGetWaveformStreamRequestMessage();
 		} catch (Exception e) {
 			logger.error("CarescapeClientMain: some exception occured ", e);
 		} finally {
@@ -75,7 +75,40 @@ public class CarescapeClient implements CommandLineRunner {
 		String xmlBody = messageHandler.writeAndReadMessage(helloMessage, socket);
 		logger.info("GetNumConfigStreamRequest-> response from server message.getContent(): [{}]", xmlBody);
 		numConfigStreamServer.startServer();
+
+		waitForBinHeaderMessage();
+		String binHeaderGenericMessage = messageHandler.loadMessageFromFile("binheader-generic-response.xml");
+		messageHandler.writeMessageOnSocket(binHeaderGenericMessage, socket);
+		waitForBinDescMessage();
+		String binDescGenericMessage = messageHandler.loadMessageFromFile("bindesc-generic-response.xml");
+		messageHandler.writeMessageOnSocket(binDescGenericMessage, socket);
 		return null;
+	}
+	
+	private void waitForBinHeaderMessage() throws IOException, MessagingException {
+		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		sessionUpdateMessage.writeTo(baos);
+		byte[] bytes = baos.toByteArray();
+		String binHeaderXml = new String(bytes);
+		//String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
+		logger.info("BinHeader-> response from server message.getContent(): [{}]", binHeaderXml);
+		if (binHeaderXml == null || binHeaderXml.indexOf("<binHeader") == -1) {
+			waitForBinHeaderMessage();
+		}
+	}
+	
+	private void waitForBinDescMessage() throws IOException, MessagingException {
+		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		sessionUpdateMessage.writeTo(baos);
+		byte[] bytes = baos.toByteArray();
+		String binDescXml = new String(bytes);
+		//String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
+		logger.info("BinDesc-> response from server message.getContent(): [{}]", binDescXml);
+		if (binDescXml == null || binDescXml.indexOf("<binDescriptor") == -1) {
+			waitForBinDescMessage();
+		}
 	}
 	
 	public String sendGetWaveformStreamRequestMessage() throws IOException, MessagingException {

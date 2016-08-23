@@ -17,9 +17,9 @@
 		<query xmlns="urn:ge:sapphire:base_1">
 		    <endTime V="*" />
 		    <sessionIDList>
-		        <sessionID V="AC1B9C4C0000978557A78148" type="IP-32:PORT-32:NTPS-32" />
+		        <sessionID V="7E106FB70000C37257B27ADC" type="IP-32:PORT-32:NTPS-32" />
 		    </sessionIDList>
-		    <selectNodes select="//params/*/(num|cfg)//*" />
+		    <selectNodes select="//params/*/(num|cfg)/*" />
 		</query>
 	</getStreamRequest>
 </s:sapphire>

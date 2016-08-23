@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<s:sapphire xmlns:s="urn:ge:sapphire:sapphire_1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0.1">
+	<genericResponse status="ack" xmlns="urn:ge:sapphire:genericMsg_1">
+		<header xmlns="urn:ge:sapphire:base_1">
+			<sessionID V="AC1B9C4C0000978557A78148" type="IP-32:PORT-32:NTPS-32"/>
+			<msgCHN V="1" />
+			<replyToMsgSQN V="1" />
+			<responseID V="3" more="*" />
+			<creationDateTime V="2016-08-07T15:19:39.216Z" />
+		</header>
+	</genericResponse>
+</s:sapphire>
+
+
