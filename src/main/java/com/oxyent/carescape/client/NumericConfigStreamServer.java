@@ -6,9 +6,11 @@ import java.net.Socket;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class NumericConfigStreamServer {
-	
+
 	@Autowired
 	private MessageHandler messageHandler;
 
@@ -30,8 +32,10 @@ public class NumericConfigStreamServer {
 							String xml = messageHandler.extractXmlBodyFromCotentObject(message.getContent());
 							System.out.println("NumericConfigStreamServer-> data from server: " + xml);
 
-							//String genericMessage = messageLoader.loadMessageFromFile("generic-response.xml");
-							//messageLoader.writeMessageOnSocket(genericMessage, socket);
+							// String genericMessage =
+							// messageLoader.loadMessageFromFile("generic-response.xml");
+							// messageLoader.writeMessageOnSocket(genericMessage,
+							// socket);
 
 							socket.close();
 						} catch (Exception e) {
