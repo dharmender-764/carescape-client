@@ -11,7 +11,7 @@
 		</header>
 		<output xmlns="urn:ge:sapphire:base_1">
 		    <data>
-		        <destination port="9002" />
+		        <destination port="9002" transport="TCP" />
 		    </data>
 		</output>
 		<query xmlns="urn:ge:sapphire:base_1">

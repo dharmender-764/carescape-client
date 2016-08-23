@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.net.Socket;
 
 import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
@@ -95,7 +96,9 @@ public class CarescapeClient implements CommandLineRunner {
 		String getSessionUpdateRequestMessage = messageHandler.loadMessageFromFile("get-session-update.xml");
 		String xmlBody = messageHandler.writeAndReadMessage(getSessionUpdateRequestMessage, socket);
 		logger.info("GetSessionUpdateRequest-> response from server message.getContent(): [{}]", xmlBody);
-		sessionUpdateServer.startServer();
+		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
+		String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
+		logger.info("SessionUpdate-> response from server message.getContent(): [{}]", sessionUpdateXml);
 		return null;
 	}
 
