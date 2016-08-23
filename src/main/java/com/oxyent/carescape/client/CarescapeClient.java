@@ -18,10 +18,12 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @Configuration
 @ComponentScan({ "com.oxyent.carescape.client" })
+@EnableAsync
 @PropertySource({ "classpath:application.properties" })
 public class CarescapeClient implements CommandLineRunner {
 

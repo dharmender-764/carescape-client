@@ -6,6 +6,7 @@ import java.net.Socket;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,6 +15,7 @@ public class NumericConfigStreamServer {
 	@Autowired
 	private MessageHandler messageHandler;
 
+	@Async
 	public void startServer() {
 		try {
 			ServerSocket serverSocket = new ServerSocket(9001);
