@@ -1,5 +1,6 @@
 package com.oxyent.carescape.client;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.Socket;
@@ -102,9 +103,13 @@ public class CarescapeClient implements CommandLineRunner {
 
 	private void checkSessionUpdateMessage() throws IOException, MessagingException {
 		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
-		String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		sessionUpdateMessage.writeTo(baos);
+		byte[] bytes = baos.toByteArray();
+		String sessionUpdateXml = new String(bytes);
+		//String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
 		logger.info("SessionUpdate-> response from server message.getContent(): [{}]", sessionUpdateXml);
-		if (sessionUpdateXml.indexOf("<sessionUpdate") == -1) {
+		if (sessionUpdateXml == null || sessionUpdateXml.indexOf("<sessionUpdate") == -1) {
 			checkSessionUpdateMessage();
 		}
 	}
