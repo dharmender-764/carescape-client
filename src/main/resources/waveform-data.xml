@@ -5,8 +5,8 @@
 		<header xmlns="urn:ge:sapphire:base_1">
 			<sessionID V="AC1B9C4C0000978557A78148" />
 			<msgCHN V="0" />
-			<msgSQN V="4" />
-			<requestID V="4" />
+			<msgSQN V="3" />
+			<requestID V="3" />
 			<creationDateTime V="2016-08-07T15:19:39.216Z" />
 		</header>
 		<output xmlns="urn:ge:sapphire:base_1">

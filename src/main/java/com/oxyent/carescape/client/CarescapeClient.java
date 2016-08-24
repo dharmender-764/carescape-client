@@ -68,8 +68,8 @@ public class CarescapeClient implements CommandLineRunner {
 			socket = new Socket(host, port);
 			sendHelloMessage();
 			sendGetSessionUpdateRequestMessage();
-			sendGetNumConfigStreamRequestMessage();
-			//sendGetWaveformStreamRequestMessage();
+			//sendGetNumConfigStreamRequestMessage();
+			sendGetWaveformStreamRequestMessage();
 		} catch (Exception e) {
 			logger.error("CarescapeClientMain: some exception occured ", e);
 		} finally {
@@ -83,20 +83,27 @@ public class CarescapeClient implements CommandLineRunner {
 		messageHandler.writeMessageOnSocket(numericConfigMessage, socket);
 		numConfigStreamServer.startServer();
 		
-		String binHeaderMessage = waitForBinHeaderMessage();
-		String binHeaderGenericMessage = messageHandler.loadMessageFromFileWithoutContentLength("binheader-generic-response.xml");
-		binHeaderGenericMessage = updateMsgSQNNoInMessage(binHeaderMessage, binHeaderGenericMessage);
-		binHeaderGenericMessage = messageHandler.updateContentLentgh(binHeaderGenericMessage);
-		messageHandler.writeMessageOnSocket(binHeaderGenericMessage, socket);
-		
+		waitAndReplyForBinHeaderMsg();
+		waitAndReplyForBinDescMsg();
+		return null;
+	}
+	
+	private void waitAndReplyForBinDescMsg() throws IOException, MessagingException {
 		String binDescMessage = waitForBinDescMessage();
 		String binDescGenericMessage = messageHandler.loadMessageFromFileWithoutContentLength("bindesc-generic-response.xml");
 		binDescGenericMessage = updateMsgSQNNoInMessage(binDescMessage, binDescGenericMessage);
 		binDescGenericMessage = messageHandler.updateContentLentgh(binDescGenericMessage);
 		messageHandler.writeMessageOnSocket(binDescGenericMessage, socket);
-		return null;
 	}
-	
+
+	private void waitAndReplyForBinHeaderMsg() throws IOException, MessagingException {
+		String binHeaderMessage = waitForBinHeaderMessage();
+		String binHeaderGenericMessage = messageHandler.loadMessageFromFileWithoutContentLength("binheader-generic-response.xml");
+		binHeaderGenericMessage = updateMsgSQNNoInMessage(binHeaderMessage, binHeaderGenericMessage);
+		binHeaderGenericMessage = messageHandler.updateContentLentgh(binHeaderGenericMessage);
+		messageHandler.writeMessageOnSocket(binHeaderGenericMessage, socket);
+	}
+
 	private String waitForBinHeaderMessage() throws IOException, MessagingException {
 		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -126,10 +133,12 @@ public class CarescapeClient implements CommandLineRunner {
 	}
 	
 	public String sendGetWaveformStreamRequestMessage() throws IOException, MessagingException {
-		String helloMessage = messageHandler.loadMessageFromFile("waveform-data.xml");
-		String xmlBody = messageHandler.writeAndReadMessage(helloMessage, socket);
-		logger.info("GetWaveformStreamRequest-> response from server message.getContent(): [{}]", xmlBody);
+		String waveformStreamMessage = messageHandler.loadMessageFromFile("waveform-data.xml");
+		messageHandler.writeMessageOnSocket(waveformStreamMessage, socket);
 		waveformStreamServer.startServer();
+		
+		waitAndReplyForBinHeaderMsg();
+		waitAndReplyForBinDescMsg();
 		return null;
 	}
 
