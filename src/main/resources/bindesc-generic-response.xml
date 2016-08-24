@@ -5,7 +5,7 @@
 		<header xmlns="urn:ge:sapphire:base_1">
 			<sessionID V="7E106FB70000C37257B27ADC" type="IP-32:PORT-32:NTPS-32"/>
 			<msgCHN V="1" />
-			<replyToMsgSQN V="2" />
+			<replyToMsgSQN V="$msgSQNNo$" />
 			<responseID V="3" more="*" />
 			<creationDateTime V="2016-08-07T15:19:39.216Z" />
 		</header>

@@ -36,6 +36,18 @@ public class MessageHandler {
 		return fullMessage;
 	}
 	
+	public String loadMessageFromFileWithoutContentLength(String fileName) throws IOException {
+		File file = new File(fileName);
+		String message = FileUtils.readFileToString(file, "UTF-8");
+		return message;
+	}
+	
+	public String updateContentLentgh(String message) {
+		int contentLength = message.getBytes().length;
+		String fullMessage = mimeMessageHeader.replace("$content-length$", String.valueOf(contentLength)) + message;
+		return fullMessage;
+	}
+	
 	public String extractXmlBodyFromCotentObject(Object content) throws IOException, MessagingException {
 		System.out.println("content type = " + content);
 		if (content instanceof InputStream) {
@@ -78,10 +90,18 @@ public class MessageHandler {
 			logger.info("Reading message from in stream...");
 			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			
+			String boundry = null;
 			StringBuilder sb = new StringBuilder();
 			String line;
 			while ((line = br.readLine()) != null) {
 				sb.append(line);
+				sb.append(System.lineSeparator());
+				if (line.startsWith("Content-Type: multipart/mixed;boundary=")) {
+					boundry = line.substring(line.indexOf("=\"") + 2, line.length() - 1);
+					System.out.println("boundry = " + boundry);
+				} else if (line.equals("--" + boundry + "--")) {
+					break;
+				}
 			}
 			System.out.println("readMessageFromSocket: " + sb.toString());
 			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(sb.toString().getBytes()));
