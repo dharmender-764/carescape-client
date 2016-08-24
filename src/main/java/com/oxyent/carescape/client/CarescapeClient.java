@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.Socket;
+import java.util.concurrent.Executor;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -16,10 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
@@ -51,6 +54,11 @@ public class CarescapeClient implements CommandLineRunner {
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(CarescapeClient.class, args);
 	}
+	
+	@Bean
+    public Executor taskExecutor() {
+        return new SimpleAsyncTaskExecutor();
+    }
 
 	public void run(String... args) throws Exception {
 		System.out.println("Inside run ");
@@ -75,7 +83,7 @@ public class CarescapeClient implements CommandLineRunner {
 		String xmlBody = messageHandler.writeAndReadMessage(helloMessage, socket);
 		logger.info("GetNumConfigStreamRequest-> response from server message.getContent(): [{}]", xmlBody);
 		numConfigStreamServer.startServer();
-
+		
 		waitForBinHeaderMessage();
 		String binHeaderGenericMessage = messageHandler.loadMessageFromFile("binheader-generic-response.xml");
 		messageHandler.writeMessageOnSocket(binHeaderGenericMessage, socket);

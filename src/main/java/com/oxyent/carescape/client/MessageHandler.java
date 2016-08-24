@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MessageHandler {
 	
-	private static final Logger logger = LoggerFactory.getLogger(CarescapeClient.class);
+	private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
 
 	@Value("${mime.message.header}")
 	private String mimeMessageHeader;
@@ -68,7 +68,7 @@ public class MessageHandler {
 	}
 	
 	public void writeMessageOnSocket(String message, Socket socket) throws IOException {
-		logger.info("Writing message to out stream...");
+		logger.info("Writing message to out stream: " + message);
 		java.io.PrintWriter out = new java.io.PrintWriter(socket.getOutputStream(), true);
 		out.println(message);
 	}
