@@ -1,7 +1,6 @@
 package com.oxyent.carescape.client;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,12 +75,13 @@ public class MessageHandler {
 	public MimeMessage readMessageFromSocket(Socket socket) throws IOException, MessagingException {
 		try {
 			logger.info("Reading message from in stream...");
-			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			char[] cbuf = new char[4096];
-			br.read(cbuf);
-
-			System.out.println("readMessageFromSocket: " + String.valueOf(cbuf));
-			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(String.valueOf(cbuf).getBytes()));
+			MimeMessage msg = new MimeMessage((Session)null, socket.getInputStream());
+//			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//			char[] cbuf = new char[4096];
+//			br.read(cbuf);
+//
+//			System.out.println("readMessageFromSocket: " + String.valueOf(cbuf));
+//			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(String.valueOf(cbuf).getBytes()));
 			return msg;
 		} catch (IOException e) {
 			logger.error("IOException while reading message from in stream ", e);

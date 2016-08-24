@@ -13,6 +13,10 @@ public class NumericConfigStreamServer {
 	@Autowired
 	private MessageHandler messageHandler;
 
+	public static void main(String[] args) {
+		new NumericConfigStreamServer().startServer();
+	}
+	
 	@Async
 	public void startServer() {
 		try {
