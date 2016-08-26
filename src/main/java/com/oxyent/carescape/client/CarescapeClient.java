@@ -68,8 +68,8 @@ public class CarescapeClient implements CommandLineRunner {
 			socket = new Socket(host, port);
 			sendHelloMessage();
 			sendGetSessionUpdateRequestMessage();
-			//sendGetNumConfigStreamRequestMessage();
-			sendGetWaveformStreamRequestMessage();
+			sendGetNumConfigStreamRequestMessage();
+			//sendGetWaveformStreamRequestMessage();
 		} catch (Exception e) {
 			logger.error("CarescapeClientMain: some exception occured ", e);
 		} finally {
@@ -94,6 +94,16 @@ public class CarescapeClient implements CommandLineRunner {
 		binDescGenericMessage = updateMsgSQNNoInMessage(binDescMessage, binDescGenericMessage);
 		binDescGenericMessage = messageHandler.updateContentLentgh(binDescGenericMessage);
 		messageHandler.writeMessageOnSocket(binDescGenericMessage, socket);
+		
+		logger.info("reading packet data from same socket...");
+		for (int i = 0; i < 3; i++) {
+			readPackets();
+		}
+	}
+
+	private void readPackets() throws IOException, MessagingException {
+		String packetsFromSocket = messageHandler.readPacketsFromSocket(socket);
+		System.out.println(packetsFromSocket);
 	}
 
 	private void waitAndReplyForBinHeaderMsg() throws IOException, MessagingException {

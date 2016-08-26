@@ -7,7 +7,7 @@
 			<msgCHN V="0" />
 			<msgSQN V="1" />
 			<requestID V="1" />
-			<creationDateTime V="2016-08-07T15:19:39.216Z" />
+			<creationDateTime V="$creationDateTime$" />
 		</header>
 	</hello>
 </s:sapphire>

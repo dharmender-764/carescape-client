@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.mail.BodyPart;
 import javax.mail.MessagingException;
@@ -28,12 +31,12 @@ public class MessageHandler {
 	@Value("${mime.message.header}")
 	private String mimeMessageHeader;
 
+	private DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'");
+
 	public String loadMessageFromFile(String fileName) throws IOException {
 		File file = new File(fileName);
 		String message = FileUtils.readFileToString(file, "UTF-8");
-		int contentLength = message.getBytes().length;
-		String fullMessage = mimeMessageHeader.replace("$content-length$", String.valueOf(contentLength)) + message;
-		return fullMessage;
+		return updateContentLentgh(message);
 	}
 	
 	public String loadMessageFromFileWithoutContentLength(String fileName) throws IOException {
@@ -43,6 +46,7 @@ public class MessageHandler {
 	}
 	
 	public String updateContentLentgh(String message) {
+		message = message.replace("$creationDateTime$", df.format(new Date()));
 		int contentLength = message.getBytes().length;
 		String fullMessage = mimeMessageHeader.replace("$content-length$", String.valueOf(contentLength)) + message;
 		return fullMessage;
@@ -105,12 +109,29 @@ public class MessageHandler {
 			}
 			System.out.println("readMessageFromSocket: " + sb.toString());
 			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(sb.toString().getBytes()));
-			
-//			char[] cbuf = new char[4096];
-//			br.read(cbuf);
-//			System.out.println("readMessageFromSocket: " + String.valueOf(cbuf));
-//			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(String.valueOf(cbuf).getBytes()));
 			return msg;
+		} catch (IOException e) {
+			logger.error("IOException while reading message from in stream ", e);
+			throw e;
+		}
+	}
+	
+	public String readPacketsFromSocket(Socket socket) throws IOException, MessagingException {
+		try {
+			logger.info("Reading message from in stream...");
+			InputStream inputStream = socket.getInputStream();
+			int nRead;
+			byte[] data = new byte[2048];
+			StringBuilder sb = new StringBuilder();
+			
+			while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+				System.out.println("nRead + " + nRead);
+				System.out.println("data received + " + new String(data));
+				sb.append(new String(data));
+			}
+			System.out.println("readPacketsFromSocket: " + sb.toString());
+			
+			return sb.toString();
 		} catch (IOException e) {
 			logger.error("IOException while reading message from in stream ", e);
 			throw e;

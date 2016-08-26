@@ -28,8 +28,9 @@ public class NumericConfigStreamServer {
 				System.out.println("NumericConfigStreamServer-> Waiting for a  connection...");
 				final DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
-                String sentence = new String( receivePacket.getData());
-                System.out.println("NumericConfigStreamServer-> data RECEIVED: " + sentence);
+                System.out.println("NumericConfigStreamServer-> connection opened********************");
+                String msg = new String(receiveData, 0, receivePacket.getLength());
+                System.out.println("NumericConfigStreamServer-> data RECEIVED: " + msg);
                 
 				/*System.out.println("NumericConfigStreamServer-> Received a  connection from  " + socket);
 				Runnable runnable = new Runnable() {

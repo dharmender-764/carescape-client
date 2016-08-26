@@ -7,7 +7,7 @@
 			<msgCHN V="2" />
 			<replyToMsgSQN V="4" />
 			<responseID V="4" more="*" />
-			<creationDateTime V="2016-08-07T15:19:39.216Z" />
+			<creationDateTime V="$creationDateTime$" />
 		</header>
 	</genericResponse>
 </s:sapphire>
