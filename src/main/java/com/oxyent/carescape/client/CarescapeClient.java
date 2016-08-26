@@ -163,12 +163,12 @@ public class CarescapeClient implements CommandLineRunner {
 		String getSessionUpdateRequestMessage = messageHandler.loadMessageFromFile("get-session-update.xml");
 		String xmlBody = messageHandler.writeAndReadMessage(getSessionUpdateRequestMessage, socket);
 		logger.info("GetSessionUpdateRequest-> response from server message.getContent(): [{}]", xmlBody);
-//		String sessionUpdateMessage = checkSessionUpdateMessage();
-//		
-//		String sessionUpdateGenericMessage = messageHandler.loadMessageFromFileWithoutContentLength("generic-response.xml");
-//		sessionUpdateGenericMessage = updateMsgSQNNoInMessage(sessionUpdateMessage, sessionUpdateGenericMessage);
-//		sessionUpdateGenericMessage = messageHandler.updateContentLentgh(sessionUpdateGenericMessage);
-//		messageHandler.writeMessageOnSocket(sessionUpdateGenericMessage, socket);
+		String sessionUpdateMessage = checkSessionUpdateMessage();
+		
+		String sessionUpdateGenericMessage = messageHandler.loadMessageFromFileWithoutContentLength("generic-response.xml");
+		sessionUpdateGenericMessage = updateMsgSQNNoInMessage(sessionUpdateMessage, sessionUpdateGenericMessage);
+		sessionUpdateGenericMessage = messageHandler.updateContentLentgh(sessionUpdateGenericMessage);
+		messageHandler.writeMessageOnSocket(sessionUpdateGenericMessage, socket);
 		return null;
 	}
 
