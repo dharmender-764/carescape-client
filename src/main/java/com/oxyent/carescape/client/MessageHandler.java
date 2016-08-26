@@ -98,12 +98,14 @@ public class MessageHandler {
 			StringBuilder sb = new StringBuilder();
 			String line;
 			while ((line = br.readLine()) != null) {
+				//System.out.println(line);
 				sb.append(line);
 				sb.append(System.lineSeparator());
-				if (line.startsWith("Content-Type: multipart/mixed;boundary=")) {
-					boundry = line.substring(line.indexOf("=\"") + 2, line.length() - 1);
-					System.out.println("boundry = " + boundry);
-				} else if (line.equals("--" + boundry + "--")) {
+				//if (line.startsWith("Content-Type: multipart/mixed;boundary=")) {
+					//boundry = line.substring(line.indexOf("=\"") + 2, line.length() - 1);
+					//System.out.println("boundry = " + boundry);
+				//} else 
+				if (line.startsWith("--") && line.endsWith("--")) {
 					break;
 				}
 			}
