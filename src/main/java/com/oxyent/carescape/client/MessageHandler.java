@@ -31,7 +31,7 @@ public class MessageHandler {
 	@Value("${mime.message.header}")
 	private String mimeMessageHeader;
 
-	private DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'");
+	private DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
 	public String loadMessageFromFile(String fileName) throws IOException {
 		File file = new File(fileName);
