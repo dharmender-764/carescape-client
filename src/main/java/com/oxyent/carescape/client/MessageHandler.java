@@ -98,18 +98,17 @@ public class MessageHandler {
 			StringBuilder sb = new StringBuilder();
 			String line;
 			while ((line = br.readLine()) != null) {
-				//System.out.println(line);
+				System.out.println(line);
 				sb.append(line);
 				sb.append(System.lineSeparator());
-				//if (line.startsWith("Content-Type: multipart/mixed;boundary=")) {
-					//boundry = line.substring(line.indexOf("=\"") + 2, line.length() - 1);
-					//System.out.println("boundry = " + boundry);
-				//} else 
-				if (line.startsWith("--") && line.endsWith("--")) {
+				/*if (line.startsWith("Content-Type: multipart/mixed;boundary=")) {
+					boundry = line.substring(line.indexOf("=\"") + 2, line.length() - 1);
+					System.out.println("boundry = " + boundry);
+				} else */if (line.equals("--" + boundry + "--")) {
 					break;
 				}
 			}
-			System.out.println("readMessageFromSocket: " + sb.toString());
+			//System.out.println("readMessageFromSocket: " + sb.toString());
 			MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(sb.toString().getBytes()));
 			return msg;
 		} catch (IOException e) {
@@ -118,24 +117,45 @@ public class MessageHandler {
 		}
 	}
 	
-	public String readPacketsFromSocket(Socket socket) throws IOException, MessagingException {
+	public String readFromSocket(Socket socket) throws IOException, MessagingException {
 		try {
 			logger.info("Reading message from in stream...");
 			InputStream inputStream = socket.getInputStream();
 			int nRead;
-			byte[] data = new byte[2048];
+			byte[] data = new byte[8192];
 			StringBuilder sb = new StringBuilder();
+			nRead = inputStream.read(data, 0, data.length);
+			sb.append(new String(data));
 			
-			while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
-				System.out.println("nRead + " + nRead);
-				System.out.println("data received + " + new String(data));
-				sb.append(new String(data));
-			}
 			System.out.println("readPacketsFromSocket: " + sb.toString());
 			
 			return sb.toString();
 		} catch (IOException e) {
 			logger.error("IOException while reading message from in stream ", e);
+			throw e;
+		}
+	}
+	
+	public void readBinaryDataStreamFromSocket(Socket socket) throws IOException, MessagingException {
+		try {
+			logger.info("Reading message from in stream...");
+			InputStream inputStream = socket.getInputStream();
+			int nRead;
+			byte[] data = new byte[2048];
+			
+			while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+				MimeMessage msg = new MimeMessage((Session) null, new ByteArrayInputStream(data));
+				if (msg != null) {
+					Multipart multipart = (Multipart) msg.getContent();
+					BodyPart bodyPart = multipart.getBodyPart(0);
+					byte[] binaryDataBytes = org.apache.commons.io.IOUtils.toByteArray((InputStream) bodyPart.getContent());
+                    String hex = com.google.common.io.BaseEncoding.base16().encode(binaryDataBytes);
+                    logger.info("binary data in hex format: [" + hex + "]");
+				}
+				data = new byte[2048];
+			}
+		} catch (IOException e) {
+			logger.error("IOException while reading binary data from in stream ", e);
 			throw e;
 		}
 	}

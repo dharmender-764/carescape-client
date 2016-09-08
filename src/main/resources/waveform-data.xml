@@ -9,11 +9,6 @@
 			<requestID V="3" />
 			<creationDateTime V="$creationDateTime$" />
 		</header>
-		<output xmlns="urn:ge:sapphire:base_1">
-		    <data>
-		        <destination port="9002" transport="UDP" />
-		    </data>
-		</output>
 		<query xmlns="urn:ge:sapphire:base_1">
 		    <endTime V="*" />
 		    <sessionIDList>

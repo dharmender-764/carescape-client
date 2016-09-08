@@ -68,8 +68,9 @@ public class CarescapeClient implements CommandLineRunner {
 			socket = new Socket(host, port);
 			sendHelloMessage();
 			sendGetSessionUpdateRequestMessage();
-			sendGetNumConfigStreamRequestMessage();
-			//sendGetWaveformStreamRequestMessage();
+			//sendGetNumConfigStreamRequestMessage();
+			sendGetWaveformStreamRequestMessage();
+			messageHandler.readBinaryDataStreamFromSocket(socket);
 		} catch (Exception e) {
 			logger.error("CarescapeClientMain: some exception occured ", e);
 		} finally {
@@ -81,7 +82,6 @@ public class CarescapeClient implements CommandLineRunner {
 	public String sendGetNumConfigStreamRequestMessage() throws IOException, MessagingException {
 		String numericConfigMessage = messageHandler.loadMessageFromFile("numeric-config-data.xml");
 		messageHandler.writeMessageOnSocket(numericConfigMessage, socket);
-		numConfigStreamServer.startServer();
 		
 		waitAndReplyForBinHeaderMsg();
 		waitAndReplyForBinDescMsg();
@@ -95,15 +95,6 @@ public class CarescapeClient implements CommandLineRunner {
 		binDescGenericMessage = messageHandler.updateContentLentgh(binDescGenericMessage);
 		messageHandler.writeMessageOnSocket(binDescGenericMessage, socket);
 		
-		logger.info("reading packet data from same socket...");
-		for (int i = 0; i < 3; i++) {
-			readPackets();
-		}
-	}
-
-	private void readPackets() throws IOException, MessagingException {
-		String packetsFromSocket = messageHandler.readPacketsFromSocket(socket);
-		System.out.println(packetsFromSocket);
 	}
 
 	private void waitAndReplyForBinHeaderMsg() throws IOException, MessagingException {
@@ -115,9 +106,9 @@ public class CarescapeClient implements CommandLineRunner {
 	}
 
 	private String waitForBinHeaderMessage() throws IOException, MessagingException {
-		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
+		MimeMessage binHeaderMessage = messageHandler.readMessageFromSocket(socket);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		sessionUpdateMessage.writeTo(baos);
+		binHeaderMessage.writeTo(baos);
 		byte[] bytes = baos.toByteArray();
 		String binHeaderXml = new String(bytes);
 		//String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
@@ -129,9 +120,9 @@ public class CarescapeClient implements CommandLineRunner {
 	}
 	
 	private String waitForBinDescMessage() throws IOException, MessagingException {
-		MimeMessage sessionUpdateMessage = messageHandler.readMessageFromSocket(socket);
+		MimeMessage binDescMessage = messageHandler.readMessageFromSocket(socket);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		sessionUpdateMessage.writeTo(baos);
+		binDescMessage.writeTo(baos);
 		byte[] bytes = baos.toByteArray();
 		String binDescXml = new String(bytes);
 		//String sessionUpdateXml = messageHandler.extractXmlBodyFromCotentObject(sessionUpdateMessage);
@@ -142,14 +133,12 @@ public class CarescapeClient implements CommandLineRunner {
 		return binDescXml;
 	}
 	
-	public String sendGetWaveformStreamRequestMessage() throws IOException, MessagingException {
+	public void sendGetWaveformStreamRequestMessage() throws IOException, MessagingException {
 		String waveformStreamMessage = messageHandler.loadMessageFromFile("waveform-data.xml");
 		messageHandler.writeMessageOnSocket(waveformStreamMessage, socket);
-		waveformStreamServer.startServer();
 		
 		waitAndReplyForBinHeaderMsg();
 		waitAndReplyForBinDescMsg();
-		return null;
 	}
 
 	public String sendHelloMessage() throws IOException, MessagingException {
@@ -161,9 +150,10 @@ public class CarescapeClient implements CommandLineRunner {
 	
 	private String sendGetSessionUpdateRequestMessage() throws IOException, MessagingException {
 		String getSessionUpdateRequestMessage = messageHandler.loadMessageFromFile("get-session-update.xml");
-		String xmlBody = messageHandler.writeAndReadMessage(getSessionUpdateRequestMessage, socket);
-		logger.info("GetSessionUpdateRequest-> response from server message.getContent(): [{}]", xmlBody);
-		String sessionUpdateMessage = checkSessionUpdateMessage();
+		messageHandler.writeMessageOnSocket(getSessionUpdateRequestMessage, socket);
+		//String xmlBody = messageHandler.writeAndReadMessage(getSessionUpdateRequestMessage, socket);
+		//logger.info("GetSessionUpdateRequest-> response from server message.getContent(): [{}]", xmlBody);
+		String sessionUpdateMessage = messageHandler.readFromSocket(socket); //checkSessionUpdateMessage();
 		
 		String sessionUpdateGenericMessage = messageHandler.loadMessageFromFileWithoutContentLength("generic-response.xml");
 		sessionUpdateGenericMessage = updateMsgSQNNoInMessage(sessionUpdateMessage, sessionUpdateGenericMessage);
@@ -190,19 +180,6 @@ public class CarescapeClient implements CommandLineRunner {
 			return checkSessionUpdateMessage();
 		}
 		return sessionUpdateXml;
-	}
-
-	private Object convertXmlToObject(String xmlBody, Class classType) {
-		try {
-			JAXBContext jaxbContext = JAXBContext.newInstance(classType);  
-			   
-	        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();  
-	        StringReader reader = new StringReader(xmlBody);
-	        return jaxbUnmarshaller.unmarshal(reader);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 	private void closeSocket() {
