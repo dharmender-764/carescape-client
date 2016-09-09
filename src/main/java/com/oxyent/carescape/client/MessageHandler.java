@@ -7,9 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.mail.BodyPart;
 import javax.mail.MessagingException;
@@ -22,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.google.common.io.BaseEncoding;
 
 @Component
 public class MessageHandler {
@@ -94,7 +100,6 @@ public class MessageHandler {
 			logger.info("Reading message from in stream...");
 			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			
-			String boundry = null;
 			StringBuilder sb = new StringBuilder();
 			String line;
 			while ((line = br.readLine()) != null) {
@@ -104,7 +109,7 @@ public class MessageHandler {
 				/*if (line.startsWith("Content-Type: multipart/mixed;boundary=")) {
 					boundry = line.substring(line.indexOf("=\"") + 2, line.length() - 1);
 					System.out.println("boundry = " + boundry);
-				} else */if (line.equals("--" + boundry + "--")) {
+				} else */if (line.startsWith("--") && line.endsWith("--")) {
 					break;
 				}
 			}
@@ -148,15 +153,70 @@ public class MessageHandler {
 				if (msg != null) {
 					Multipart multipart = (Multipart) msg.getContent();
 					BodyPart bodyPart = multipart.getBodyPart(0);
-					byte[] binaryDataBytes = org.apache.commons.io.IOUtils.toByteArray((InputStream) bodyPart.getContent());
-                    String hex = com.google.common.io.BaseEncoding.base16().encode(binaryDataBytes);
-                    logger.info("binary data in hex format: [" + hex + "]");
+					byte[] binaryData = org.apache.commons.io.IOUtils.toByteArray((InputStream) bodyPart.getContent());
+					parseBinaryData(binaryData);
+					
+//                    String hex = com.google.common.io.BaseEncoding.base16().encode(binaryDataBytes);
+//                    logger.info("binary data in hex format: [" + hex + "]");
+//                    
+//                    java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(binaryDataBytes);
+//                    bb.order( java.nio.ByteOrder.BIG_ENDIAN);
+//                    logger.info("printing bytes with big endian format");
+//                    while( bb.hasRemaining()) {
+//                       int intValue = bb.getInt();
+//                       System.out.println(intValue);
+//                    }
 				}
 				data = new byte[2048];
+				break;
 			}
 		} catch (IOException e) {
 			logger.error("IOException while reading binary data from in stream ", e);
 			throw e;
+		}
+	}
+	
+	public void parseBinaryData(byte[] binaryData) {
+		ByteBuffer bb = ByteBuffer.wrap(binaryData);
+        bb.order( java.nio.ByteOrder.BIG_ENDIAN);
+        System.out.println("printing bytes with big endian format");
+        
+        byte[] formatIdBytes = new byte[4];
+        bb.get(formatIdBytes, 0, formatIdBytes.length);
+        System.out.println("format id = " + ByteBuffer.wrap(formatIdBytes).getInt());
+        
+        byte[] sessionIdBytes = new byte[12];
+        bb.get(sessionIdBytes, 0, sessionIdBytes.length);
+        System.out.println("session id = " + BaseEncoding.base16().encode(sessionIdBytes));
+        
+        byte[] blockSQNBytes = new byte[4];
+        bb.get(blockSQNBytes, 0, blockSQNBytes.length);
+        System.out.println("blockSQN id = " + ByteBuffer.wrap(blockSQNBytes).getInt());
+        
+        byte[] blockLengthBytes = new byte[2];
+        bb.get(blockLengthBytes, 0, blockLengthBytes.length);
+        System.out.println("blockLength id = " + ByteBuffer.wrap(blockLengthBytes).getShort());
+        
+        byte[] startDateTimeBytes = new byte[4];
+        bb.get(startDateTimeBytes, 0, startDateTimeBytes.length);
+        Calendar cal = Calendar.getInstance();
+        cal.set(1900, 0, 1, 0, 0);
+		int seconds = ByteBuffer.wrap(startDateTimeBytes).getInt();
+		cal.add(Calendar.SECOND, -seconds);
+		System.out.println("startDateTime = " + cal.getTime());
+        
+		List<String> leads = Arrays.asList(new String[] {"I", "II", "III", "V1", "AVR", "AVL", "AVF"});
+		for (String leadNo : leads) {
+			byte[] leadBytes = new byte[60];
+	        bb.get(leadBytes, 0, leadBytes.length);
+	        ByteBuffer leadBytesBuffer = ByteBuffer.wrap(leadBytes);
+	        System.out.print("lead " + leadNo + " data:	[");
+	        while( leadBytesBuffer.hasRemaining()) {
+	            int intValue = leadBytesBuffer.getShort();
+	            System.out.print(intValue);
+	            System.out.print(", ");
+	         }
+	        System.out.println("]");
 		}
 	}
 	
